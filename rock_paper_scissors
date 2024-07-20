@@ -1,0 +1,119 @@
+import pygame
+import random
+
+pygame.init()
+
+
+WIDTH, HEIGHT = 500, 500
+NUM_OBJECTS = int(input("How many of each type would you want?"))
+NUM_OBJECTS *= 3 
+SPEED = int(input("Set the game speed the larger the number, the faster it will simulate (recommend 1 for clarity, 3 for efficiency"))
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("RPS Simulation")
+clock = pygame.time.Clock()
+
+# Load images
+rock_image = pygame.image.load('rock.jpg')
+paper_image = pygame.image.load('paper.png')
+scissors_image = pygame.image.load('scissors.png')
+
+# Resize images
+rock_image = pygame.transform.scale(rock_image, (20, 20))
+paper_image = pygame.transform.scale(paper_image, (20, 20))
+scissors_image = pygame.transform.scale(scissors_image, (20, 20))
+
+# Object class
+class RPSObject:
+    def __init__(self, obj_type):
+        self.type = obj_type
+        self.x = random.randint(0, WIDTH)
+        self.y = random.randint(0, HEIGHT)
+        self.vx = random.choice([-SPEED, SPEED])
+        self.vy = random.choice([-SPEED, SPEED])
+
+    def move(self):
+        self.x += self.vx
+        self.y += self.vy
+        if self.x <= 0 or self.x >= WIDTH:
+            self.vx = -self.vx
+        if self.y <= 0 or self.y >= HEIGHT:
+            self.vy = -self.vy
+
+    def draw(self):
+        if self.type == "rock":
+            screen.blit(rock_image, (self.x, self.y))
+        elif self.type == "paper":
+            screen.blit(paper_image, (self.x, self.y))
+        elif self.type == "scissors":
+            screen.blit(scissors_image, (self.x, self.y))
+
+def check_collision(obj1, obj2):
+    distance = ((obj1.x - obj2.x)**2 + (obj1.y - obj2.y)**2) ** 0.5
+    if distance < 20:  # Use the size of the images to determine collision distance
+        if obj1.type == "rock" and obj2.type == "scissors":
+            obj2.type = "rock"
+        elif obj1.type == "scissors" and obj2.type == "paper":
+            obj2.type = "scissors"
+        elif obj1.type == "paper" and obj2.type == "rock":
+            obj2.type = "paper"
+        elif obj2.type == "rock" and obj1.type == "scissors":
+            obj1.type = "rock"
+        elif obj2.type == "scissors" and obj1.type == "paper":
+            obj1.type = "scissors"
+        elif obj2.type == "paper" and obj1.type == "rock":
+            obj1.type = "paper"
+
+objects = [] #Create OOP object
+for obj_type in ["rock", "paper", "scissors"]:
+    objects.extend([RPSObject(obj_type) for i in range(NUM_OBJECTS // 3)])
+
+
+pygame.font.init()
+font = pygame.font.SysFont(None, 20)
+
+# Main loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    screen.fill((255, 255, 255))
+
+    for obj in objects:
+        obj.move()
+        obj.draw()
+
+    for i in range(len(objects)):
+        for j in range(i + 1, len(objects)):
+            check_collision(objects[i], objects[j])
+
+    pygame.display.flip()
+    clock.tick(60)
+
+    types = set(obj.type for obj in objects) #using set to prevent duplicate variable sharing same name
+    if len(types) == 1:
+        result_message = f"Simulation finished with all objects being: {types.pop()}"
+        credit_message_1 = f"Thank you for trying out the RPS war simulation"
+        credit_message_2 = f"created by Marcus!"
+        screen.fill((255, 255, 255))
+        
+        end_scene_text = font.render(result_message, True, (0, 0, 0))
+        end_scene_window = end_scene_text.get_rect(center=(WIDTH//2, HEIGHT//2))
+        
+        credit_scene_text_1 = font.render(credit_message_1, True, (0, 0, 0))
+        credit_scene_text_2 = font.render(credit_message_2, True, (0, 0, 0))
+        credit_scene_window_1 = credit_scene_text_1.get_rect(center=(WIDTH//2, HEIGHT//2))
+        credit_scene_window_2 = credit_scene_text_2.get_rect(center=(WIDTH//2, (HEIGHT//2)+30))
+        
+        screen.blit(end_scene_text, end_scene_window)
+        pygame.display.flip()
+        pygame.time.wait(5000)
+        screen.fill((255, 255, 255))
+        screen.blit(credit_scene_text_1, credit_scene_window_1)
+        screen.blit(credit_scene_text_2, credit_scene_window_2)
+        pygame.display.flip()
+        pygame.time.wait(5000)
+        
+        running = False
+        pygame.quit()
